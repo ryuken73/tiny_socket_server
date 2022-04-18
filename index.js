@@ -12,26 +12,23 @@ const HTTP_PORT = 9009;
 
 io.on('connection', socket =>{
     onConnect(socket);
+    socket.name = 'guest';
     attachHandler(socket, io);
     socket.on('disconnect', reason => {
-        console.log('disconnected:', socket.customMode);
-        if(socket.customMode){
-            socket.broadcast.emit('reset:recorders', socket.customMode);
-        }
+        console.log('disconnected:', socket.id);
+        socket.broadcast.emit('disconnected', socket.id);
     })
 })
 
 const onConnect = socket => {
     console.log('connected: ', socket.handshake.address);
+    socket.broadcast.emit('connected', socket.id);
 }
 
 const attachHandler = (socket, io) => {
     socket.onAny((eventName, ...args) => {
-        console.log(`event: [${eventName}] from [${socket.handshake.address}]:`, args);
-        if(eventName === 'setMode'){
-            socket.customMode = args[0];
-            return;
-        }
+        if(eventName === 'join') { socket.name = args[0].hostname}
+        console.log(`event: [${eventName}] from [${socket.name}][${socket.id}]:`, args);
         socket.broadcast.emit(eventName, args[0])
     })
 }
